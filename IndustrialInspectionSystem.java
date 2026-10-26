@@ -1,91 +1,3 @@
-/* =================================================================================================
- * PROJECT: AI-POWERED INDUSTRIAL VISUAL INSPECTION AND QUALITY MANAGEMENT SYSTEM
- * FORMAT:  CONSOLIDATED ALL-IN-ONE SINGLE SOURCE FILE
- *
- * =================================================================================================
- * 15 CORE JAVA SYLLABUS TOPICS - ARCHITECTURAL RATIONALE & IMPLEMENTATION INDEX
- * =================================================================================================
- *
- * [TOPIC 01] CLASSES, OBJECTS & ENCAPSULATION
- *   REASON: We implemented private fields with public getters and setters in DefectRecord and
- *   InspectionItem to protect sensitive inspection metrics (confidence, severity, quality score)
- *   from unauthorized external mutation and ensure all status transitions pass through validation.
- *
- * [TOPIC 02] ABSTRACT CLASSES & ABSTRACT METHODS
- *   REASON: We implemented abstract class InspectionItem because all manufactured workpieces share
- *   common properties (part ID, batch, production line), but the exact formula for computing the
- *   quality score differs completely based on whether the workpiece is an electronic PCB or a CNC part.
- *
- * [TOPIC 03] INHERITANCE (extends)
- *   REASON: We implemented inheritance (PCBComponent and MechanicalPart extending InspectionItem)
- *   to eliminate boilerplate code and establish an extensible industrial domain hierarchy.
- *
- * [TOPIC 04] POLYMORPHISM & METHOD OVERRIDING (@Override)
- *   REASON: We implemented method overriding for calculateFinalQualityScore() and getItemCategory()
- *   so the visual inspection engine can evaluate any manufactured part uniformly through a base
- *   InspectionItem reference at runtime using dynamic method dispatch.
- *
- * [TOPIC 05] METHOD OVERLOADING
- *   REASON: We implemented overloaded addDefect() and updateRecord() methods because defect data
- *   can arrive either as a pre-constructed DefectRecord object from automated sensors or as raw
- *   coordinate primitives (x, y, w, h, severity) directly from optical camera vision feeds.
- *
- * [TOPIC 06] INTERFACES (interface & implements)
- *   REASON: We implemented interfaces (Inspectable, QualityAuditor) to decouple the visual inspection
- *   algorithms and ISO-9001 yield reporting from the UI and persistence layers, allowing new inspection
- *   engines (e.g. edge AI or laser scanners) to plug in without modifying existing code.
- *
- * [TOPIC 07] STATIC KEYWORD (Variables & Methods)
- *   REASON: We implemented static for FACILITY_NAME so plant identification is universally shared
- *   without memory duplication, and static synchronized globalInspectionCounter to maintain an
- *   atomic plant-wide count of total items inspected across all instances and threads.
- *
- * [TOPIC 08] FINAL KEYWORD (Constants & Immutability)
- *   REASON: We implemented final for PASS_THRESHOLD_SCORE (85.0) and CRITICAL_SEVERITY_LIMIT (8.0)
- *   because quality thresholds and line-halt limits are safety-critical constants that must never
- *   be modified or corrupted at runtime.
- *
- * [TOPIC 09] CONSTRUCTOR CHAINING, 'this' & 'super' KEYWORDS
- *   REASON: We implemented super(...) in derived classes and this(...) in engine constructors to
- *   ensure common base attributes are fully validated and initialized first before subclass-specific
- *   parameters are set, preventing uninitialized state bugs.
- *
- * [TOPIC 10] EXCEPTION HANDLING (User-Defined Checked Exceptions, try-catch, throw, throws)
- *   REASON: We implemented CriticalDefectException and InspectionException because when a severe
- *   structural crack or solder bridge (severity >= 8.0) is detected, standard return codes can be
- *   ignored, but throwing a checked exception forces an immediate emergency production line halt.
- *
- * [TOPIC 11] MULTITHREADING & CONCURRENCY (Thread class, Runnable interface, synchronized, join)
- *   REASON: We implemented multithreading because factory parts arrive continuously from conveyor
- *   sensors in real-time (Thread), and writing large ISO audit logs to disk (Runnable) must execute
- *   concurrently in the background so the operator's inspection dashboard never freezes or drops frames.
- *
- * [TOPIC 12] JAVA COLLECTIONS FRAMEWORK (ArrayList, Queue, Stack, Hashtable, Vector)
- *   REASON: We implemented 5 specialized collections tailored to industrial plant workflows:
- *   - ArrayList: fast indexed random-access lookup for the active catalog.
- *   - Queue (LinkedList): strictly FIFO ordering for incoming conveyor arrivals.
- *   - Stack: strictly LIFO ordering for quarantine rework (reworking the most recently rejected part first).
- *   - Hashtable: synchronized thread-safe directory for station-to-inspector lookups.
- *   - Vector: legacy synchronized thread-safe long-term record archival.
- *
- * [TOPIC 13] LAMBDA EXPRESSIONS & STREAM API
- *   REASON: We implemented lambda expressions and Stream reductions to enable high-speed functional
- *   sorting by quality score and instantaneous First-Pass Yield (FPY) metrics computation without
- *   writing verbose, error-prone nested loops.
- *
- * [TOPIC 14] FILE I/O STREAMS (Character & Byte Streams)
- *   REASON: We implemented Character Streams (FileWriter, PrintWriter, BufferedReader) to generate
- *   human-readable ISO-9001 CSV audit logs that plant supervisors can open in Excel, and Byte Streams
- *   (FileInputStream, FileOutputStream) for bit-exact binary cloning of operational snapshots.
- *
- * [TOPIC 15] DATABASE PERSISTENCE (JDBC) & SWING/AWT GRAPHICAL DASHBOARD
- *   REASON: We implemented JDBC with PreparedStatements and an embedded zero-config relational store
- *   for SQL-injection-proof transactional persistence, paired with a Swing/AWT desktop dashboard
- *   providing plant operators with real-time visual inspection, glowing defect bounding boxes, and
- *   instant batch updating.
- * =================================================================================================
- */
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -142,20 +54,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-/* =================================================================================================
- * [TOPIC 10] EXCEPTION HANDLING (User-Defined Checked Exceptions, try-catch, throw, throws)
- * REASON FOR IMPLEMENTATION:
- * In manufacturing environments, a simple return code is dangerous because it can be ignored by callers.
- * We implemented custom checked exceptions (CriticalDefectException and InspectionException) so that
- * when severe defects (e.g. solder bridges, micro-cracks with severity >= 8.0) are detected, the
- * Java compiler enforces mandatory handling and the runtime initiates an automated emergency line-halt.
- * =================================================================================================
- */
-
-/**
- * Base checked exception for the Industrial Visual Inspection domain.
- * Reason: Establishes a common root for all inspection-related checked exceptions.
- */
 class InspectionException extends Exception {
     private static final long serialVersionUID = 1L;
 
@@ -168,10 +66,6 @@ class InspectionException extends Exception {
     }
 }
 
-/**
- * User-defined checked exception thrown when an optical inspection identifies a hazardous defect.
- * Reason: Forces callers to catch and trigger an emergency production line halt when severity >= 8.0.
- */
 class CriticalDefectException extends InspectionException {
     private static final long serialVersionUID = 1L;
     private final String partId;
@@ -191,10 +85,6 @@ class CriticalDefectException extends InspectionException {
     public double getSeverityScore() { return severityScore; }
 }
 
-/**
- * Checked exception thrown when batch parameters violate plant quality specifications.
- * Reason: Ensures invalid batches cannot enter production unnoticed.
- */
 class InvalidBatchException extends InspectionException {
     private static final long serialVersionUID = 1L;
 
@@ -203,55 +93,25 @@ class InvalidBatchException extends InspectionException {
     }
 }
 
-/* =================================================================================================
- * [TOPIC 06] INTERFACES (interface & implements)
- * REASON FOR IMPLEMENTATION:
- * We implemented interfaces (Inspectable and QualityAuditor) to enforce a clear architectural
- * contract between inspection services and reporting tools. This decouples the scanning logic from
- * the GUI and database, allowing edge AI engines or physical camera SDKs to be swapped in seamlessly.
- * =================================================================================================
- */
-
-/**
- * Interface defining the automated visual quality inspection contract.
- * Reason: Guarantees that any inspection engine implementation provides inspectItem and threshold methods.
- */
 interface Inspectable {
     String inspectItem(InspectionItem item) throws CriticalDefectException, InspectionException;
     void setConfidenceThreshold(double threshold);
     double getConfidenceThreshold();
 }
 
-/**
- * Interface defining factory quality audit, yield metrics, and ISO-9001 reporting contracts.
- * Reason: Standardizes First-Pass Yield (FPY) and Defect Rate computation across all analytics modules.
- */
 interface QualityAuditor {
     double calculateFirstPassYield(List<InspectionItem> items);
     double calculateDefectRate(List<InspectionItem> items);
     String generateAuditReport(List<InspectionItem> items);
 }
 
-/* =================================================================================================
- * [TOPIC 01] CLASSES, OBJECTS & ENCAPSULATION
- * REASON FOR IMPLEMENTATION:
- * We encapsulated all defect attributes (confidence, severity, coordinates) within DefectRecord using
- * private visibility and public accessors to prevent external tampering and preserve data integrity.
- * =================================================================================================
- */
-
-/**
- * Encapsulates detected defect metadata identified through visual optical inspection.
- * Reason: Stores defect attributes securely and provides read/write access via validated getters/setters.
- */
 class DefectRecord implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // Encapsulated private attributes
     private String defectId;
     private String defectType;
-    private double confidenceScore; // e.g. 0.94 (94% confidence)
-    private double severityScore;   // 1.0 to 10.0 scale
+    private double confidenceScore;
+    private double severityScore;
     private int bboxX;
     private int bboxY;
     private int bboxWidth;
@@ -290,45 +150,22 @@ class DefectRecord implements Serializable {
     public String getDetectedAt() { return detectedAt; }
 }
 
-/* =================================================================================================
- * [TOPIC 02] ABSTRACT CLASSES & ABSTRACT METHODS
- * [TOPIC 07] STATIC KEYWORD (Static Variables & Static Synchronized Methods)
- * [TOPIC 08] FINAL KEYWORD (Immutable Constants)
- * [TOPIC 09] CONSTRUCTOR INITIALIZATION & 'this' KEYWORD
- * [TOPIC 05] METHOD OVERLOADING
- *
- * REASON FOR IMPLEMENTATION:
- * - Abstract Class: Every manufactured unit has an ID, batch, and status, but calculating quality scores
- *   differs by domain (PCBs suffer electrical bridging; CNC titanium parts suffer structural cracks).
- * - Static: FACILITY_NAME is shared across all units to conserve memory; global counter tracks plant volume.
- * - Final: PASS_THRESHOLD_SCORE and CRITICAL_SEVERITY_LIMIT protect plant safety standards from being altered.
- * - Overloading: Allows adding defects via an existing DefectRecord or raw sensor coordinates.
- * =================================================================================================
- */
-
-/**
- * Abstract Base Class representing any manufactured entity undergoing visual inspection.
- * Reason: Provides shared state and enforces subclass implementation of domain-specific score algorithms.
- */
 abstract class InspectionItem implements Serializable, Comparable<InspectionItem> {
     private static final long serialVersionUID = 1L;
 
-    // [TOPIC 07 & 08] Static facility name and final immutable quality threshold limits
     public static final String FACILITY_NAME = "SmartFactory AOI Unit-01";
     private static int globalInspectionCounter = 0;
 
-    public static final double PASS_THRESHOLD_SCORE = 85.0;  // Score >= 85.0 required for PASS
-    public static final double CRITICAL_SEVERITY_LIMIT = 8.0; // Severity >= 8.0 halts operation
+    public static final double PASS_THRESHOLD_SCORE = 85.0;
+    public static final double CRITICAL_SEVERITY_LIMIT = 8.0;
 
-    // [TOPIC 01] Encapsulated state variables
     private String itemId;
     private String batchNumber;
     private String productionLine;
     private double rawQualityScore;
-    private String status; // "PENDING", "PASSED", "DEFECTIVE", "REJECTED"
+    private String status;
     private List<DefectRecord> defectList;
 
-    // [TOPIC 09] Constructor initializing common fields with 'this'
     public InspectionItem(String itemId, String batchNumber, String productionLine) {
         this.itemId = itemId;
         this.batchNumber = batchNumber;
@@ -340,7 +177,6 @@ abstract class InspectionItem implements Serializable, Comparable<InspectionItem
         incrementInspectionCounter();
     }
 
-    // [TOPIC 07] Static synchronized method ensuring thread-safe counter incrementation
     private static synchronized void incrementInspectionCounter() {
         globalInspectionCounter++;
     }
@@ -353,11 +189,9 @@ abstract class InspectionItem implements Serializable, Comparable<InspectionItem
         globalInspectionCounter = 0;
     }
 
-    // [TOPIC 02] Abstract methods forcing subclasses to provide domain-specific behavior (Polymorphism)
     public abstract String getItemCategory();
     public abstract double calculateFinalQualityScore();
 
-    // [TOPIC 05] Method Overloading 1: Accepts a complete DefectRecord object
     public void addDefect(DefectRecord defect) {
         if (defect != null) {
             this.defectList.add(defect);
@@ -365,7 +199,6 @@ abstract class InspectionItem implements Serializable, Comparable<InspectionItem
         }
     }
 
-    // [TOPIC 05] Method Overloading 2: Accepts raw vision sensor primitive values
     public void addDefect(String defectId, String defectType, double confidence, double severity, int x, int y, int w, int h) {
         DefectRecord record = new DefectRecord(defectId, defectType, confidence, severity, x, y, w, h);
         addDefect(record);
@@ -386,7 +219,6 @@ abstract class InspectionItem implements Serializable, Comparable<InspectionItem
         }
     }
 
-    // Getters and Setters
     public String getItemId() { return itemId; }
     public void setItemId(String itemId) { this.itemId = itemId; }
     public String getBatchNumber() { return batchNumber; }
@@ -411,51 +243,34 @@ abstract class InspectionItem implements Serializable, Comparable<InspectionItem
     }
 }
 
-/* =================================================================================================
- * [TOPIC 03] INHERITANCE (extends)
- * [TOPIC 04] POLYMORPHISM & METHOD OVERRIDING (@Override)
- * [TOPIC 09] 'super' KEYWORD CONSTRUCTOR PROPAGATION
- *
- * REASON FOR IMPLEMENTATION:
- * We implemented PCBComponent and MechanicalPart extending InspectionItem so that electronic and
- * mechanical workpieces reuse shared base attributes while specializing their unique physical properties
- * and quality score penalty formulas. Dynamic method dispatch allows the inspection engine to process
- * any part without writing separate inspection code for every product family.
- * =================================================================================================
- */
-
-/**
- * Concrete class representing a Printed Circuit Board (PCB) subject to SMT optical inspection.
- * Reason: Encapsulates circuit board properties (layers, copper weight, surface finish) and electrical penalties.
- */
 class PCBComponent extends InspectionItem {
     private static final long serialVersionUID = 1L;
 
     private int layerCount;
     private double copperWeightOz;
-    private String surfaceFinishType; // e.g. "ENIG", "HASL", "OSP"
+    private String surfaceFinishType;
 
     public PCBComponent(String itemId, String batchNumber, String productionLine,
                         int layerCount, double copperWeightOz, String surfaceFinishType) {
-        super(itemId, batchNumber, productionLine); // [TOPIC 09] Delegates common setup to base class
+        super(itemId, batchNumber, productionLine);
         this.layerCount = layerCount;
         this.copperWeightOz = copperWeightOz;
         this.surfaceFinishType = surfaceFinishType;
     }
 
-    @Override // [TOPIC 04] Overrides base template method
+    @Override
     public String getItemCategory() {
         return "Printed Circuit Board (PCB)";
     }
 
-    @Override // [TOPIC 04] Overrides base template method with SMT electrical short/open penalty multiplier
+    @Override
     public double calculateFinalQualityScore() {
         double baseScore = 100.0;
         for (DefectRecord defect : getDefectList()) {
             double penalty = defect.getSeverityScore() * 2.5 * defect.getConfidenceScore();
             if (defect.getDefectType().equalsIgnoreCase("Solder Bridge") ||
                 defect.getDefectType().equalsIgnoreCase("Trace Open Circuit")) {
-                penalty *= 1.4; // 40% additional penalty for catastrophic electrical short/open hazards
+                penalty *= 1.4;
             }
             baseScore -= penalty;
         }
@@ -470,38 +285,34 @@ class PCBComponent extends InspectionItem {
     public void setSurfaceFinishType(String surfaceFinishType) { this.surfaceFinishType = surfaceFinishType; }
 }
 
-/**
- * Concrete class representing Precision CNC Machined Mechanical Parts.
- * Reason: Encapsulates machining properties (alloy grade, tolerance, surface roughness) and structural penalties.
- */
 class MechanicalPart extends InspectionItem {
     private static final long serialVersionUID = 1L;
 
-    private String alloyGrade;         // e.g. "Titanium Ti-6Al-4V", "Aluminium 6061-T6"
-    private double toleranceMicrons;   // Allowed dimensional tolerance (+/- microns)
-    private double surfaceRoughnessRa; // Ra in micro-meters
+    private String alloyGrade;
+    private double toleranceMicrons;
+    private double surfaceRoughnessRa;
 
     public MechanicalPart(String itemId, String batchNumber, String productionLine,
                           String alloyGrade, double toleranceMicrons, double surfaceRoughnessRa) {
-        super(itemId, batchNumber, productionLine); // [TOPIC 09] Delegates common setup to base class
+        super(itemId, batchNumber, productionLine);
         this.alloyGrade = alloyGrade;
         this.toleranceMicrons = toleranceMicrons;
         this.surfaceRoughnessRa = surfaceRoughnessRa;
     }
 
-    @Override // [TOPIC 04] Overrides base template method
+    @Override
     public String getItemCategory() {
         return "Precision Mechanical Component";
     }
 
-    @Override // [TOPIC 04] Overrides base template method with structural fracture penalty multiplier
+    @Override
     public double calculateFinalQualityScore() {
         double score = 100.0;
         for (DefectRecord defect : getDefectList()) {
             double penalty = defect.getSeverityScore() * 2.2 * defect.getConfidenceScore();
             if (defect.getDefectType().equalsIgnoreCase("Structural Micro-Crack") ||
                 defect.getDefectType().equalsIgnoreCase("Surface Fracture")) {
-                penalty *= 1.6; // 60% additional penalty for catastrophic structural fracture risk
+                penalty *= 1.6;
             }
             score -= penalty;
         }
@@ -516,27 +327,12 @@ class MechanicalPart extends InspectionItem {
     public void setSurfaceRoughnessRa(double surfaceRoughnessRa) { this.surfaceRoughnessRa = surfaceRoughnessRa; }
 }
 
-/* =================================================================================================
- * [TOPIC 06] INTERFACE IMPLEMENTATION (AIInspectionEngine implements Inspectable)
- * [TOPIC 10] THROWING CHECKED EXCEPTIONS (CriticalDefectException)
- *
- * REASON FOR IMPLEMENTATION:
- * The AI visual engine implements Inspectable to fulfill the inspection contract. When an inspected
- * part exhibits a severity >= 8.0, it throws CriticalDefectException to immediately stop the assembly line.
- * It also dynamically renders procedural 2D CAD graphics using Graphics2D so the system works standalone.
- * =================================================================================================
- */
-
-/**
- * AI Visual Inspection Engine.
- * Reason: Simulates automated optical scanning, localized bounding box generation, and 2D CAD HUD rendering.
- */
 class AIInspectionEngine implements Inspectable {
     private double confidenceThreshold;
     private final Random random;
 
     public AIInspectionEngine() {
-        this(0.70); // [TOPIC 09] Constructor chaining with 'this()'
+        this(0.70);
     }
 
     public AIInspectionEngine(double confidenceThreshold) {
@@ -564,7 +360,6 @@ class AIInspectionEngine implements Inspectable {
             performVisualInspection(item);
         }
 
-        // [TOPIC 10] Emergency line-halt trigger when severity >= 8.0
         for (DefectRecord defect : item.getDefectList()) {
             if (defect.getSeverityScore() >= InspectionItem.CRITICAL_SEVERITY_LIMIT) {
                 item.setStatus("REJECTED");
@@ -583,7 +378,7 @@ class AIInspectionEngine implements Inspectable {
             for (int i = 0; i < defectCount; i++) {
                 String defectName;
                 double severity;
-                double confidence = 0.82 + (random.nextDouble() * 0.16); // 82% to 98%
+                double confidence = 0.82 + (random.nextDouble() * 0.16);
 
                 int x = 50 + random.nextInt(280);
                 int y = 45 + random.nextInt(160);
@@ -626,7 +421,6 @@ class AIInspectionEngine implements Inspectable {
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Industrial Dark Inspection Background
         g2.setColor(new Color(15, 23, 42));
         g2.fillRect(0, 0, width, height);
 
@@ -636,18 +430,16 @@ class AIInspectionEngine implements Inspectable {
         }
 
         if (item instanceof PCBComponent) {
-            // --- PRINTED CIRCUIT BOARD (PCB) ---
+
             int pad = 24;
             int bw = width - (pad * 2);
             int bh = height - (pad * 2);
 
-            // Green Substrate
             g2.setColor(new Color(22, 101, 52));
             g2.fillRoundRect(pad, pad, bw, bh, 14, 14);
             g2.setColor(new Color(34, 197, 94));
             g2.drawRoundRect(pad, pad, bw, bh, 14, 14);
 
-            // Conductive Gold/Copper Circuit Tracks
             g2.setColor(new Color(234, 179, 8));
             for (int y = pad + 25; y < bh; y += 32) {
                 g2.fillRect(pad + 15, y, bw - 30, 3);
@@ -656,7 +448,6 @@ class AIInspectionEngine implements Inspectable {
                 }
             }
 
-            // IC Microchips
             g2.setColor(new Color(28, 28, 28));
             g2.fillRect(pad + 40, pad + 35, 90, 55);
             g2.fillRect(bw - 130, pad + 70, 75, 45);
@@ -665,24 +456,21 @@ class AIInspectionEngine implements Inspectable {
             g2.drawRect(pad + 40, pad + 35, 90, 55);
             g2.drawRect(bw - 130, pad + 70, 75, 45);
 
-            // IC Silk-screen labels
             g2.setColor(new Color(203, 213, 225));
             g2.drawString("MCU-ARM32", pad + 52, pad + 65);
             g2.drawString("FLASH-ROM", bw - 120, pad + 95);
 
         } else {
-            // --- PRECISION MACHINED MECHANICAL COMPONENT ---
+
             int pad = 28;
             int bw = width - (pad * 2);
             int bh = height - (pad * 2);
 
-            // Metallic Brushed Alloy Base
             g2.setColor(new Color(100, 116, 139));
             g2.fillRoundRect(pad, pad, bw, bh, 20, 20);
             g2.setColor(new Color(226, 232, 240));
             g2.drawRoundRect(pad, pad, bw, bh, 20, 20);
 
-            // Lathe Grooves
             g2.setColor(new Color(71, 85, 105));
             int cx = width / 2;
             int cy = height / 2;
@@ -690,13 +478,11 @@ class AIInspectionEngine implements Inspectable {
                 g2.drawOval(cx - r, cy - r, r * 2, r * 2);
             }
 
-            // Center Bore Hole
             g2.setColor(new Color(30, 41, 59));
             g2.fillOval(cx - 30, cy - 30, 60, 60);
             g2.setColor(new Color(148, 163, 184));
             g2.drawOval(cx - 30, cy - 30, 60, 60);
 
-            // Alloy Spec Tag
             g2.setColor(new Color(241, 245, 249));
             g2.drawString("TITANIUM GRADE-5 (CNC)", pad + 15, height - pad - 12);
         }
@@ -706,31 +492,14 @@ class AIInspectionEngine implements Inspectable {
     }
 }
 
-/* =================================================================================================
- * [TOPIC 13] LAMBDA EXPRESSIONS & STREAM API
- * [TOPIC 06] INTERFACE IMPLEMENTATION (InspectionAnalytics implements QualityAuditor)
- *
- * REASON FOR IMPLEMENTATION:
- * We implemented Lambda Expressions and Streams to perform sorting and metrics aggregation in a
- * concise, declarative manner. Sorting by quality score descending or computing First-Pass Yield (FPY)
- * via streams eliminates clumsy temporary loop variables and delivers clean functional code.
- * =================================================================================================
- */
-
-/**
- * Handles sorting, filtering, and statistical reporting.
- * Reason: Implements functional programming with lambdas for sorting and stream aggregations for yield metrics.
- */
 class InspectionAnalytics implements QualityAuditor {
 
-    // [TOPIC 13] Lambda Expression for Comparator sorting by Item ID ascending
     public List<InspectionItem> sortItemsByIdAscending(List<InspectionItem> items) {
         List<InspectionItem> sortedList = new ArrayList<>(items);
         Collections.sort(sortedList, (item1, item2) -> item1.getItemId().compareTo(item2.getItemId()));
         return sortedList;
     }
 
-    // [TOPIC 13] Lambda Expression for Comparator sorting by Quality Score descending
     public List<InspectionItem> sortItemsByScoreDescending(List<InspectionItem> items) {
         List<InspectionItem> sortedList = new ArrayList<>(items);
         Collections.sort(sortedList, (item1, item2) -> Double.compare(item2.getRawQualityScore(), item1.getRawQualityScore()));
@@ -743,7 +512,6 @@ class InspectionAnalytics implements QualityAuditor {
         return sortedList;
     }
 
-    // [TOPIC 13] Stream API filter
     public List<InspectionItem> filterByStatus(List<InspectionItem> items, String targetStatus) {
         return items.stream()
                 .filter(item -> item.getStatus().equalsIgnoreCase(targetStatus))
@@ -802,24 +570,8 @@ class InspectionAnalytics implements QualityAuditor {
     }
 }
 
-/* =================================================================================================
- * [TOPIC 11] MULTITHREADING & CONCURRENCY (Thread subclass, Runnable interface, join, sleep)
- *
- * REASON FOR IMPLEMENTATION:
- * Manufacturing assembly lines run concurrently. We implemented multithreading using:
- * 1. InspectionStreamFeederThread (extends Thread) to simulate asynchronous sensor arrivals into the FIFO queue.
- * 2. AsyncBackupWorkerRunnable (implements Runnable) to persist large ISO CSV files in the background,
- *    ensuring the operator's inspection dashboard never drops frames or becomes unresponsive during disk I/O.
- * =================================================================================================
- */
-
-/**
- * Implements concurrent processing for real-time visual inspection and background backup.
- * Reason: Demonstrates Thread subclassing and Runnable implementation for non-blocking operations.
- */
 class InspectionBackupService {
 
-    // [TOPIC 11] Concurrency via Thread class extension
     public static class InspectionStreamFeederThread extends Thread {
         private final InspectionQueueManager queueManager;
         private final int totalItemsToGenerate;
@@ -863,7 +615,6 @@ class InspectionBackupService {
         }
     }
 
-    // [TOPIC 11] Concurrency via Runnable interface implementation
     public static class AsyncBackupWorkerRunnable implements Runnable {
         private final List<InspectionItem> itemsToBackup;
         private final String destinationPath;
@@ -897,23 +648,6 @@ class InspectionBackupService {
     }
 }
 
-/* =================================================================================================
- * [TOPIC 12] JAVA COLLECTIONS FRAMEWORK (ArrayList, Queue/LinkedList, Stack, Hashtable, Vector)
- *
- * REASON FOR IMPLEMENTATION:
- * An industrial inspection cell requires distinct data structures matching physical factory processes:
- * 1. ArrayList: fast random-access indexing for looking up items in the active catalog.
- * 2. Queue (LinkedList): First-In-First-Out (FIFO) conveyor belt sequencing.
- * 3. Stack: Last-In-First-Out (LIFO) quarantine area so technicians rework the most recently rejected unit first.
- * 4. Hashtable: synchronized key-value store for mapping plant stations to certified lead inspectors.
- * 5. Vector: thread-safe synchronized storage for immutable long-term compliance archiving.
- * =================================================================================================
- */
-
-/**
- * Manages manufacturing workflow and item staging using Java Collection Framework.
- * Reason: Selects optimal data structures for factory conveyor queues, quarantine stacks, and catalogs.
- */
 class InspectionQueueManager {
     private final List<InspectionItem> productCatalog;
     private static final int MAX_CATALOG_SIZE = 500;
@@ -940,7 +674,6 @@ class InspectionQueueManager {
         stationInspectorDirectory.put("STATION-04", "AI Edge Inference Node");
     }
 
-    // 1. ArrayList Operations
     public boolean addProductToCatalog(InspectionItem item) {
         if (productCatalog.size() >= MAX_CATALOG_SIZE || item == null) {
             return false;
@@ -973,7 +706,6 @@ class InspectionQueueManager {
         return removed;
     }
 
-    // 2. Queue Operations (FIFO)
     public void enqueueForInspection(InspectionItem item) {
         if (item != null) {
             pendingQueue.offer(item);
@@ -988,7 +720,6 @@ class InspectionQueueManager {
         return pendingQueue.size();
     }
 
-    // 3. Stack Operations (LIFO)
     public void pushToQuarantine(InspectionItem item) {
         if (item != null) {
             quarantinedStack.push(item);
@@ -1010,7 +741,6 @@ class InspectionQueueManager {
         return quarantinedStack;
     }
 
-    // 4. Hashtable Operations
     public void registerStationInspector(String stationId, String inspectorDetails) {
         stationInspectorDirectory.put(stationId, inspectorDetails);
     }
@@ -1023,7 +753,6 @@ class InspectionQueueManager {
         return new Hashtable<>(stationInspectorDirectory);
     }
 
-    // 5. Vector Operations (Thread-safe)
     public void archiveInspectionRecord(InspectionItem item) {
         if (item != null) {
             archivedRecords.add(item);
@@ -1035,25 +764,8 @@ class InspectionQueueManager {
     }
 }
 
-/* =================================================================================================
- * [TOPIC 14] FILE I/O STREAMS (Character Streams & Byte Streams)
- *
- * REASON FOR IMPLEMENTATION:
- * We implemented both stream paradigms to fulfill distinct factory archiving needs:
- * 1. Character Streams (FileWriter, PrintWriter, BufferedReader): Writes human-readable CSV inspection logs
- *    for ISO-9001 quality audits so supervisors can inspect records directly in spreadsheet software.
- * 2. Byte Streams (FileInputStream, FileOutputStream): Reads and writes exact binary snapshots of memory
- *    dumps without character-encoding corruption.
- * =================================================================================================
- */
-
-/**
- * Handles persistence, audit archiving, and ISO-9001 quality reports using Java I/O streams.
- * Reason: Implements Character and Byte streams with try-with-resources for automatic resource closing.
- */
 class FileReportService {
 
-    // [TOPIC 14] Character Streams: PrintWriter & FileWriter
     public boolean exportInspectionLogToCSV(List<InspectionItem> items, String destinationPath) {
         File file = new File(destinationPath);
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
@@ -1080,7 +792,6 @@ class FileReportService {
         }
     }
 
-    // [TOPIC 14] Character Streams: BufferedReader & FileReader
     public String readAuditTextFile(String filePath) throws IOException {
         File file = new File(filePath);
         if (!file.exists()) {
@@ -1097,7 +808,6 @@ class FileReportService {
         return content.toString();
     }
 
-    // [TOPIC 14] Byte Streams: FileInputStream & FileOutputStream
     public boolean copyBinarySnapshot(String sourcePath, String targetPath) throws IOException {
         File sourceFile = new File(sourcePath);
         if (!sourceFile.exists()) {
@@ -1122,20 +832,6 @@ class FileReportService {
     }
 }
 
-/* =================================================================================================
- * [TOPIC 15] DATABASE PERSISTENCE WITH JDBC (PreparedStatements, Transactions & Embedded Store)
- *
- * REASON FOR IMPLEMENTATION:
- * We implemented the JDBC architecture to persist quality records securely. Using PreparedStatement
- * prevents SQL injection vulnerabilities and accelerates batch execution. An embedded thread-safe
- * relational store provides zero-config fallback if an external MySQL server is offline.
- * =================================================================================================
- */
-
-/**
- * Handles database persistence and CRUD operations using JDBC architecture.
- * Reason: Implements DDL table generation, parameter-bound CRUD transactions, and embedded fallback.
- */
 class DatabaseService {
 
     private String dbUrl;
@@ -1179,7 +875,7 @@ class DatabaseService {
                 return;
             }
         } catch (Exception ignored) {
-            // Use built-in embedded relational store
+
         }
 
         isEmbeddedMode = true;
@@ -1190,7 +886,6 @@ class DatabaseService {
         return isEmbeddedMode;
     }
 
-    // CRUD: 1. INSERT Record
     public boolean insertRecord(InspectionItem item) {
         if (item == null || item.getItemId() == null) return false;
 
@@ -1217,7 +912,6 @@ class DatabaseService {
         }
     }
 
-    // CRUD: 2. READ / SEARCH by Item ID
     public InspectionItem searchRecordById(String itemId) {
         if (itemId == null) return null;
 
@@ -1256,7 +950,6 @@ class DatabaseService {
         return null;
     }
 
-    // CRUD: 3. UPDATE Item and Batch Details
     public boolean updateFullRecord(String itemId, String newBatch, String newLine, String newCategory, String newStatus, double newScore) {
         if (itemId == null) return false;
 
@@ -1289,12 +982,10 @@ class DatabaseService {
         }
     }
 
-    // [TOPIC 05] Method Overloading: updateRecord vs updateFullRecord
     public boolean updateRecord(String itemId, String newStatus, double newScore) {
         return updateFullRecord(itemId, null, null, null, newStatus, newScore);
     }
 
-    // CRUD: 4. DELETE Record
     public boolean deleteRecord(String itemId) {
         if (itemId == null) return false;
 
@@ -1346,20 +1037,6 @@ class DatabaseService {
     }
 }
 
-/* =================================================================================================
- * [TOPIC 15] INTERACTIVE GRAPHICAL USER INTERFACE (SWING & AWT DASHBOARD)
- *
- * REASON FOR IMPLEMENTATION:
- * We implemented a Swing and AWT GUI to give plant operators an intuitive, responsive control dashboard.
- * It features real-time 2D CAD visual inspection rendering, glowing defect bounding boxes, KPI metrics cards,
- * full batch/unit editing, and synchronized JTable views.
- * =================================================================================================
- */
-
-/**
- * Presentable Industrial AI Visual Inspection & Quality Management Dashboard.
- * Reason: Provides operators with real-time visual inspection, bounding box rendering, and batch updates.
- */
 class InspectionDashboardGUI extends JFrame {
 
     private final AIInspectionEngine aiEngine;
@@ -1368,7 +1045,6 @@ class InspectionDashboardGUI extends JFrame {
     private final DatabaseService dbService;
     private final FileReportService fileReportService;
 
-    // Form inputs
     private JTextField txtItemId;
     private JTextField txtBatchId;
     private JComboBox<String> cmbCategory;
@@ -1376,7 +1052,6 @@ class InspectionDashboardGUI extends JFrame {
     private JComboBox<String> cmbStatus;
     private JTextField txtScore;
 
-    // Action buttons
     private JButton btnInspect;
     private JButton btnUpdate;
     private JButton btnDelete;
@@ -1388,16 +1063,13 @@ class InspectionDashboardGUI extends JFrame {
     private JButton btnExportAudit;
     private JButton btnSortScore;
 
-    // Metric KPI labels
     private JLabel lblTotalCount;
     private JLabel lblYieldRate;
     private JLabel lblDefectRate;
     private JLabel lblQuarantineCount;
 
-    // Visual Canvas
     private VisualInspectionCanvas canvas;
 
-    // Data table
     private DefaultTableModel tableModel;
     private JTable recordTable;
 
@@ -1434,11 +1106,9 @@ class InspectionDashboardGUI extends JFrame {
         getContentPane().setBackground(new Color(15, 23, 42));
         setLayout(new BorderLayout(10, 10));
 
-        // Top Header and KPI Metrics
         JPanel topPanel = createHeaderPanel();
         add(topPanel, BorderLayout.NORTH);
 
-        // Center Split: Left = Camera Feed Canvas, Right = Unit & Batch Controls
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         centerPanel.setOpaque(false);
         centerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
@@ -1451,11 +1121,9 @@ class InspectionDashboardGUI extends JFrame {
 
         add(centerPanel, BorderLayout.CENTER);
 
-        // Bottom Table View (Database & Quality Records)
         JPanel bottomPanel = createTablePanel();
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Load first component on canvas
         inspectNextInQueue();
     }
 
@@ -1464,13 +1132,12 @@ class InspectionDashboardGUI extends JFrame {
         header.setBackground(new Color(15, 23, 42));
         header.setBorder(BorderFactory.createEmptyBorder(10, 14, 8, 14));
 
-        // Title and Plant Info
         JPanel titlePanel = new JPanel(new GridLayout(2, 1));
         titlePanel.setOpaque(false);
 
         JLabel title = new JLabel("AI INDUSTRIAL OPTICAL INSPECTION & QUALITY ASSURANCE SYSTEM");
         title.setFont(new Font("Segoe UI", Font.BOLD, 17));
-        title.setForeground(new Color(56, 189, 248)); // Electric Cyan
+        title.setForeground(new Color(56, 189, 248));
 
         JLabel sub = new JLabel("Facility: " + InspectionItem.FACILITY_NAME + "  |  Inference Mode: Computer Vision Anomaly Segmentation");
         sub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -1480,7 +1147,6 @@ class InspectionDashboardGUI extends JFrame {
         titlePanel.add(sub);
         header.add(titlePanel, BorderLayout.NORTH);
 
-        // KPI Metric Cards
         JPanel metricsBar = new JPanel(new GridLayout(1, 4, 12, 12));
         metricsBar.setOpaque(false);
         metricsBar.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
@@ -1524,7 +1190,6 @@ class InspectionDashboardGUI extends JFrame {
         canvas = new VisualInspectionCanvas();
         panel.add(canvas, BorderLayout.CENTER);
 
-        // Fast Inspection Trigger Bar
         JPanel quickBar = new JPanel(new GridLayout(1, 3, 6, 6));
         quickBar.setOpaque(false);
         quickBar.setBorder(BorderFactory.createEmptyBorder(6, 2, 2, 2));
@@ -1555,7 +1220,6 @@ class InspectionDashboardGUI extends JFrame {
                 0, 0, new Font("Segoe UI", Font.BOLD, 12), new Color(148, 163, 184)
         ));
 
-        // Form Fields
         JPanel form = new JPanel(new GridLayout(6, 2, 6, 6));
         form.setOpaque(false);
         form.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
@@ -1590,7 +1254,6 @@ class InspectionDashboardGUI extends JFrame {
 
         container.add(form, BorderLayout.NORTH);
 
-        // Action Buttons Grid
         JPanel buttons = new JPanel(new GridLayout(3, 2, 6, 6));
         buttons.setOpaque(false);
         buttons.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
@@ -1659,7 +1322,6 @@ class InspectionDashboardGUI extends JFrame {
         ));
         container.setPreferredSize(new Dimension(1000, 190));
 
-        // Toolbar
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         bar.setOpaque(false);
         btnSortScore = createButton("Sort by Score Descending (Lambda)", new Color(79, 70, 229));
@@ -1682,7 +1344,6 @@ class InspectionDashboardGUI extends JFrame {
         recordTable.getTableHeader().setForeground(Color.WHITE);
         recordTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 11));
 
-        // Color Status Column
         recordTable.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object val, boolean isSel, boolean hasFocus, int row, int col) {
@@ -1695,7 +1356,6 @@ class InspectionDashboardGUI extends JFrame {
             }
         });
 
-        // Row Selection -> Populate Form & Canvas
         recordTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int r = recordTable.getSelectedRow();
@@ -1984,12 +1644,10 @@ class InspectionDashboardGUI extends JFrame {
                 return;
             }
 
-            // HUD Crosshairs
             g2.setColor(new Color(255, 255, 255, 25));
             g2.drawLine(w / 2, 0, w / 2, h);
             g2.drawLine(0, h / 2, w, h / 2);
 
-            // Bounding Boxes
             if (currentItem != null) {
                 for (DefectRecord d : currentItem.getDefectList()) {
                     boolean isSevere = d.getSeverityScore() >= 7.5;
@@ -2004,7 +1662,6 @@ class InspectionDashboardGUI extends JFrame {
                     g2.drawRect(bx, by, bw, bh);
                     g2.drawRect(bx - 1, by - 1, bw + 2, bh + 2);
 
-                    // Tag Badge
                     String label = String.format("%s (%.0f%%)", d.getDefectType(), d.getConfidenceScore() * 100);
                     g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
                     int tw = g2.getFontMetrics().stringWidth(label) + 12;
@@ -2017,7 +1674,6 @@ class InspectionDashboardGUI extends JFrame {
                     g2.drawString(label, bx + 6, Math.max(13, by - 7));
                 }
 
-                // Status Badge Overlay
                 String status = currentItem.getStatus();
                 Color statusBg = "PASSED".equalsIgnoreCase(status) ? new Color(16, 185, 129) : new Color(225, 29, 72);
                 g2.setColor(statusBg);
@@ -2030,20 +1686,6 @@ class InspectionDashboardGUI extends JFrame {
     }
 }
 
-/* =================================================================================================
- * MAIN ENTRY POINT & AUTOMATED VERIFICATION TEST RUNNER
- * REASON FOR IMPLEMENTATION:
- * The main runner provides two operational modes:
- * 1. Default Mode: Launches the interactive Swing GUI dashboard for operator quality control.
- * 2. Headless / CLI Mode (--cli): Executes an automated verification test suite verifying all 15 topics
- *    without requiring a display environment.
- * =================================================================================================
- */
-
-/**
- * Main Executable Class for AI Industrial Visual Inspection & Quality Management System.
- * Reason: Consolidates execution bootstrap and automated verification suite into a single entry point.
- */
 public class IndustrialInspectionSystem {
 
     public static void main(String[] args) {
@@ -2099,7 +1741,6 @@ public class IndustrialInspectionSystem {
         System.out.println("--------------------------------------------------------------------------------");
         AIInspectionEngine engine = new AIInspectionEngine(0.70);
 
-        // Standard Component Inspection
         try {
             System.out.println("TC1: Running Component Optical Inspection on " + pcb1.getItemId() + "...");
             pcb1.addDefect(new DefectRecord("DEF-101", "Cold Solder Joint", 0.88, 4.5, 60, 60, 30, 30));
@@ -2109,7 +1750,6 @@ public class IndustrialInspectionSystem {
             System.out.println("     Inspection Notice: " + e.getMessage());
         }
 
-        // Critical Defect Line-Halt Trigger
         try {
             System.out.println("TC2: Ingesting Critical Defect (Severity 9.5/10.0)...");
             PCBComponent criticalUnit = new PCBComponent("PCB-CRIT-99", "BATCH-02", "SMT-Line-1", 4, 1.0, "HASL");
@@ -2130,7 +1770,6 @@ public class IndustrialInspectionSystem {
         InspectionQueueManager queueManager = new InspectionQueueManager();
         FileReportService fileService = new FileReportService();
 
-        // Multithreading (Thread class)
         InspectionBackupService.InspectionStreamFeederThread feeder =
                 new InspectionBackupService.InspectionStreamFeederThread(queueManager, 3);
         feeder.start();
@@ -2140,7 +1779,6 @@ public class IndustrialInspectionSystem {
 
         System.out.println("TC1: Conveyor Feeder Thread staged: " + queueManager.getPendingQueueSize() + " items.");
 
-        // Character Stream CSV Export
         String testCsvPath = "data/inspection_audit.csv";
         fileService.exportInspectionLogToCSV(List.of(pcb1, mech1), testCsvPath);
         System.out.println("TC2: Character Stream: Exported inspection log to " + testCsvPath);

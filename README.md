@@ -16,9 +16,7 @@ An end-to-end, single-file Java SE industrial quality-control application modeli
   - **Desktop GUI Mode:** Full Swing/AWT operator dashboard featuring real-time optical camera simulation, glowing defect bounding boxes, live KPI cards (FPY, Defect Count, Average Score), dynamic catalog filtering, and JDBC CRUD controls.
   - **Automated CLI Verification Mode (`--cli`):** Headless test runner executing 6 test suites verifying all 15 Java topics with 100% automated pass confirmation.
 - **Zero External Dependencies:** Built with pure Java SE standard libraries (no Maven, Gradle, or external JAR requirements).
-- **Dual Source Distribution:**
-  - `IndustrialInspectionSystem.java`: Full source code with detailed architectural engineering comments explaining the reason for implementing each of the 15 Java topics.
-  - `IndustrialInspectionSystem_NoComments.java`: Clean, comment-free production code ideal for printing, report documentation, and academic appendix submission.
+- **Single Source Architecture:** The entire system is cleanly implemented in [`IndustrialInspectionSystem.java`](IndustrialInspectionSystem.java), free of clutter and ready for immediate compilation, inspection, and reporting.
 
 ---
 
@@ -71,13 +69,12 @@ java IndustrialInspectionSystem --cli
 ## Project Structure
 
 ```text
-├── .gitignore                                 # Git ignore file for compiled classes & IDE files
-├── IndustrialInspectionSystem.java            # Consolidated single-file system (with detailed topic reason comments)
-├── IndustrialInspectionSystem_NoComments.java # Clean, non-commented source code for academic reports
-├── README.md                                  # Complete project documentation and topic reference
-├── run.bat                                    # One-click Windows compilation & launch script
+├── .gitignore                         # Git ignore file for compiled classes & IDE files
+├── IndustrialInspectionSystem.java    # Consolidated single-file system (clean production code)
+├── README.md                          # Complete project documentation and topic reference
+├── run.bat                            # One-click Windows compilation & launch script
 └── data/
-    └── inspection_audit.csv                   # ISO-9001 audit report exported via Character Streams
+    └── inspection_audit.csv           # ISO-9001 audit report exported via Character Streams
 ```
 
 ---
