@@ -1,0 +1,3 @@
+ItemID,BatchNumber,ProductionLine,Category,Status,QualityScore,DefectsCount
+UNIT-1001,B-2026-X1,SMT-Line-01,Printed Circuit Board (PCB),PASSED,100.00,0
+UNIT-1002,B-2026-X1,CNC-Line-02,Precision Mechanical Component,PASSED,100.00,0
